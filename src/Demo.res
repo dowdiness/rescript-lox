@@ -13,7 +13,7 @@ let readFileByLine = (path) => {
   let lines = []
 
   let rl = Readline.make(
-    Readline.interfaceOptions(~input=Fs.createReadStream(path), ~crlfDelay=infinity, ()),
+    Readline.interfaceOptions(~input=Fs.createReadStream(path), ~crlfDelay=infinity, ())
   )
 
   Promise.make((resolve, reject) => {
@@ -37,21 +37,45 @@ let readFileByLine = (path) => {
   })
 }
 
-let runFile = (path) => {
-  readFileByLine(path)
-    ->then(lines => {
-      resolve(Js.Array.joinWith("\n", lines))
-    })
-    ->then(msg => {
-      Js.log(msg);
-      resolve()
-    })
-    ->ignore
-}
-
 let run = (source) => {
   // let tokens = scanTokens(source)
   Js.log(`Scanner: ${source}`)
 }
 
-runFile("./example.lox")
+let runFile = (path) => {
+  readFileByLine(path)
+    ->then(lines => {
+      resolve(Js.Array.joinWith("\n", lines))
+    })
+    ->then(code => {
+      if code->String.length > 0 {
+        run(code)
+      }
+      resolve()
+    })
+    ->ignore
+}
+
+let runPrompt = () => {
+  let rl = Readline.make(
+    Readline.interfaceOptions(
+      ~input=Process.stdin(Process.process),
+      ~output=Process.stdout(Process.process),
+      ~crlfDelay=infinity,
+      ~prompt="> ",
+      ()
+    )
+  )
+  rl->Readline.Interface.prompt(null)
+  rl
+    ->Readline.Interface.on(Event.fromString("line"), code => {
+      if code->String.length > 0 {
+        run(code)
+      }
+      rl->Readline.Interface.prompt(null)
+    })
+    ->ignore
+}
+
+// runFile("./example.lox")
+runPrompt()
