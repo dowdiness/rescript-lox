@@ -1,0 +1,22 @@
+{
+  "name": "rescript-lox",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "keywords": [
+    "rescript"
+  ],
+  "author": "Koji Ishimoto",
+  "license": "ISC",
+  "scripts": {
+    "res:build": "rescript",
+    "res:clean": "rescript clean",
+    "res:dev": "rescript build -w"
+  },
+  "dependencies": {
+    "@rescript/core": "^0.4.0",
+    "rescript": "^10.1.4",
+    "rescript-nodejs": "^15.0.0"
+  }
+}
