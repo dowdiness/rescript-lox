@@ -1,1 +1,57 @@
-Console.log("Hello, World!")
+open NodeJs
+open Promise
+
+// let main = () => {
+//   Fs.createReadStream("./example.lox")
+//     ->Stream.pipe(Process.stdout(Process.process))
+//     ->Stream.onError(_ => Js.log("handleError"))
+// }
+
+// let _ = main()
+
+let readFileByLine = (path) => {
+  let lines = []
+
+  let rl = Readline.make(
+    Readline.interfaceOptions(~input=Fs.createReadStream(path), ~crlfDelay=infinity, ()),
+  )
+
+  Promise.make((resolve, reject) => {
+    rl
+      ->Readline.Interface.on(Event.fromString("close"), _ => {
+        rl->Readline.Interface.close
+        resolve(. lines)
+      })
+      ->ignore
+    rl
+      ->Readline.Interface.on(Event.fromString("error"), err => {
+        reject(. err)
+      })
+      ->ignore
+    rl
+      ->Readline.Interface.on(Event.fromString("line"), line => {
+        open Js.Array2
+        lines->push(line)->ignore
+      })
+      ->ignore
+  })
+}
+
+let runFile = (path) => {
+  readFileByLine(path)
+    ->then(lines => {
+      resolve(Js.Array.joinWith("\n", lines))
+    })
+    ->then(msg => {
+      Js.log(msg);
+      resolve()
+    })
+    ->ignore
+}
+
+let run = (source) => {
+  // let tokens = scanTokens(source)
+  Js.log(`Scanner: ${source}`)
+}
+
+runFile("./example.lox")

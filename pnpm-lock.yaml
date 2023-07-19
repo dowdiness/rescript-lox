@@ -8,6 +8,9 @@ dependencies:
   '@rescript/core':
     specifier: ^0.4.0
     version: 0.4.0(rescript@10.1.4)
+  '@ryyppy/rescript-promise':
+    specifier: ^2.1.0
+    version: 2.1.0
   rescript:
     specifier: ^10.1.4
     version: 10.1.4
@@ -23,6 +26,10 @@ packages:
       rescript: ^10.1.0 || ^11.0.0-alpha.0 || next
     dependencies:
       rescript: 10.1.4
+    dev: false
+
+  /@ryyppy/rescript-promise@2.1.0:
+    resolution: {integrity: sha512-+dW6msBrj2Lr2hbEMX+HoWCvN89qVjl94RwbYWJgHQuj8jm/izdPC0YzxgpGoEFdeAEW2sOozoLcYHxT6o5WXQ==}
     dev: false
 
   /rescript-nodejs@15.0.0:
