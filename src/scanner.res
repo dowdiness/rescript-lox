@@ -81,6 +81,10 @@ let isAtEnd = (scanner) => {
   scanner.current >= scanner.source->Js.String.length
 }
 
+let isDigit = (c) => {
+  c >= "0" && c <= "9" ? true : false
+}
+
 let advanceScanner = (scanner) => {
   ...scanner,
   current: scanner.current + 1
@@ -98,6 +102,22 @@ let getLexeme = (scanner: scanner) => {
   scanner.source->Js.String2.substring(~from=scanner.start, ~to_=scanner.current)
 }
 
+let peek = (scanner) => {
+  if isAtEnd(scanner) {
+    "\0"
+  } else {
+    String.charAt(scanner.source, scanner.current)
+  }
+}
+
+let peekNext = (scanner) => {
+  if scanner.current + 1 >= scanner.source->String.length {
+    "\0"
+  } else {
+    String.charAt(scanner.source, scanner.current + 1)
+  }
+}
+
 let addToken = (scanner: scanner, tokenType) => {
   let token = {
     tokenType: tokenType,
@@ -111,16 +131,83 @@ let addToken = (scanner: scanner, tokenType) => {
   }
 }
 
+let addTokenWithLiteral = (scanner, tokenType, literal) => {
+  let token = {
+    tokenType: tokenType,
+    lexeme: getLexeme(scanner),
+    literal: literal,
+    line: scanner.line,
+  }
+  {
+    ...scanner,
+    tokens: Array.concat(scanner.tokens, [token])
+  }
+}
+
 let addDoubleToken = (scanner, doubleToken, singleToken) => {
   switch scanner->advanceScanner->getChar {
     | None => addToken(scanner, singleToken)
-    | Some(c) =>
-      if c == "=" {
-        addToken(advanceScanner(scanner), doubleToken)
-      } else {
-        addToken(scanner, singleToken)
-      }
+    | Some("=") => addToken(advanceScanner(scanner), doubleToken)
+    | Some(_) => addToken(scanner, singleToken)
   }
+}
+
+let addCommentToken = (scanner) => {
+  let rec commentOut = (scanner) => {
+    if peek(scanner) != "\n" && !isAtEnd(scanner) {
+      scanner->advanceScanner->commentOut
+    } else {
+      scanner
+    }
+  }
+  switch scanner->advanceScanner->getChar {
+    | None => addToken(scanner, Slash)
+    | Some("/") => commentOut(scanner)
+    | Some(_) => addToken(scanner, Slash)
+  }
+}
+
+let addStringToken = (scanner) => {
+  let rec consumeString = (scanner) => {
+    if peek(scanner) != "\"" && !isAtEnd(scanner) {
+      if peek(scanner) != "\n" {
+        { ...scanner, line: scanner.line + 1 }->advanceScanner->consumeString
+      } else {
+        scanner->advanceScanner->consumeString
+      }
+    } else {
+      scanner
+    }
+  }
+  let closing = (scanner) => {
+    if isAtEnd(scanner) {
+      LoxError.error(Js.String.make(scanner.line), "Unterminated string.")
+      scanner
+    } else {
+      let trim = (scanner) => {
+        let literal= Value.LoxString(String.substring(scanner.source, ~start=scanner.start + 1, ~end=scanner.current - 1))
+        addTokenWithLiteral(scanner, String, literal)
+      }
+      scanner->advanceScanner->trim
+    }
+  }
+  scanner->consumeString->closing
+}
+
+let addNumberToken = (scanner) => {
+  let rec consumeNumber = (scanner) => {
+    if peek(scanner)->isDigit {
+      scanner->advanceScanner->consumeNumber
+    } else {
+      if peek(scanner) == "." && peekNext(scanner)->isDigit {
+        scanner->advanceScanner->consumeNumber
+      } else {
+        scanner
+      }
+    }
+  }
+  let scanner = consumeNumber(scanner)
+  addToken(scanner, Number)
 }
 
 let scanToken = (scanner) => {
@@ -144,8 +231,11 @@ let scanToken = (scanner) => {
         | "=" => addDoubleToken(scanner, EqualEqual, Equal)
         | "<" => addDoubleToken(scanner, LessEqual, Less)
         | ">" => addDoubleToken(scanner, GreaterEqual, Greater)
+        | "/" => addCommentToken(scanner)
         | " " | "\r" | "\t" => scanner
         | "\n" => { ...scanner, line: scanner.line + 1 }
+        | `"` => addStringToken(scanner)
+        | c when isDigit(c) => addNumberToken(scanner)
         | _ => {
           LoxError.error(Js.String.make(scanner.line), "Unexpected character.")
           scanner
@@ -221,5 +311,5 @@ let tokenToString = (token: token) => {
   tokenTypeToString(token.tokenType) ++ ", " ++ token.lexeme ++ ", " ++ Js.String.make(token.literal)
 }
 
-let tokens = scanTokens(makeScanner("((!*+-=<> <= =====))"))
+let tokens = scanTokens(makeScanner(`((!*+-=<> <= =====))"dsfsa"123.1({})`))
 Js.log(tokens->Array.map(tokenToString))

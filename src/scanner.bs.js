@@ -18,6 +18,14 @@ function isAtEnd(scanner) {
   return scanner.current >= scanner.source.length;
 }
 
+function isDigit(c) {
+  if (c >= "0") {
+    return c <= "9";
+  } else {
+    return false;
+  }
+}
+
 function advanceScanner(scanner) {
   return {
           source: scanner.source,
@@ -40,6 +48,22 @@ function getLexeme(scanner) {
   return scanner.source.substring(scanner.start, scanner.current);
 }
 
+function peek(scanner) {
+  if (isAtEnd(scanner)) {
+    return "\0";
+  } else {
+    return scanner.source.charAt(scanner.current);
+  }
+}
+
+function peekNext(scanner) {
+  if ((scanner.current + 1 | 0) >= scanner.source.length) {
+    return "\0";
+  } else {
+    return scanner.source.charAt(scanner.current + 1 | 0);
+  }
+}
+
 function addToken(scanner, tokenType) {
   var token_lexeme = getLexeme(scanner);
   var token_line = scanner.line;
@@ -58,13 +82,101 @@ function addToken(scanner, tokenType) {
         };
 }
 
+function addTokenWithLiteral(scanner, tokenType, literal) {
+  var token_lexeme = getLexeme(scanner);
+  var token_line = scanner.line;
+  var token = {
+    tokenType: tokenType,
+    lexeme: token_lexeme,
+    literal: literal,
+    line: token_line
+  };
+  return {
+          source: scanner.source,
+          tokens: scanner.tokens.concat([token]),
+          start: scanner.start,
+          current: scanner.current,
+          line: scanner.line
+        };
+}
+
 function addDoubleToken(scanner, doubleToken, singleToken) {
-  var c = getChar(advanceScanner(scanner));
-  if (c === "=") {
+  var match = getChar(advanceScanner(scanner));
+  if (match === "=") {
     return addToken(advanceScanner(scanner), doubleToken);
   } else {
     return addToken(scanner, singleToken);
   }
+}
+
+function addCommentToken(scanner) {
+  var match = getChar(advanceScanner(scanner));
+  if (match === "/") {
+    var _scanner = scanner;
+    while(true) {
+      var scanner$1 = _scanner;
+      if (!(peek(scanner$1) !== "\n" && !isAtEnd(scanner$1))) {
+        return scanner$1;
+      }
+      _scanner = advanceScanner(scanner$1);
+      continue ;
+    };
+  } else {
+    return addToken(scanner, /* Slash */9);
+  }
+}
+
+function addStringToken(scanner) {
+  var consumeString = function (_scanner) {
+    while(true) {
+      var scanner = _scanner;
+      if (!(peek(scanner) !== "\"" && !isAtEnd(scanner))) {
+        return scanner;
+      }
+      if (peek(scanner) !== "\n") {
+        _scanner = advanceScanner({
+              source: scanner.source,
+              tokens: scanner.tokens,
+              start: scanner.start,
+              current: scanner.current,
+              line: scanner.line + 1 | 0
+            });
+        continue ;
+      }
+      _scanner = advanceScanner(scanner);
+      continue ;
+    };
+  };
+  var scanner$1 = consumeString(scanner);
+  if (isAtEnd(scanner$1)) {
+    LoxError.error(String(scanner$1.line), "Unterminated string.");
+    return scanner$1;
+  }
+  var scanner$2 = advanceScanner(scanner$1);
+  var literal = {
+    TAG: /* LoxString */3,
+    _0: scanner$2.source.substring(scanner$2.start + 1 | 0, scanner$2.current - 1 | 0)
+  };
+  return addTokenWithLiteral(scanner$2, /* String */20, literal);
+}
+
+function addNumberToken(scanner) {
+  var consumeNumber = function (_scanner) {
+    while(true) {
+      var scanner = _scanner;
+      if (isDigit(peek(scanner))) {
+        _scanner = advanceScanner(scanner);
+        continue ;
+      }
+      if (!(peek(scanner) === "." && isDigit(peekNext(scanner)))) {
+        return scanner;
+      }
+      _scanner = advanceScanner(scanner);
+      continue ;
+    };
+  };
+  var scanner$1 = consumeNumber(scanner);
+  return addToken(scanner$1, /* Number */21);
 }
 
 function scanToken(scanner) {
@@ -90,6 +202,8 @@ function scanToken(scanner) {
         return addToken(scanner$1, /* Minus */6);
     case "." :
         return addToken(scanner$1, /* Dot */5);
+    case "/" :
+        return addCommentToken(scanner$1);
     case ";" :
         return addToken(scanner$1, /* Semicolon */8);
     case "<" :
@@ -98,6 +212,8 @@ function scanToken(scanner) {
         return addDoubleToken(scanner$1, /* EqualEqual */14, /* Equal */13);
     case ">" :
         return addDoubleToken(scanner$1, /* GreaterEqual */16, /* Greater */15);
+    case "\"" :
+        return addStringToken(scanner$1);
     case "\n" :
         return {
                 source: scanner$1.source,
@@ -115,8 +231,12 @@ function scanToken(scanner) {
     case "}" :
         return addToken(scanner$1, /* RightBrace */3);
     default:
-      LoxError.error(String(scanner$1.line), "Unexpected character.");
-      return scanner$1;
+      if (isDigit(c)) {
+        return addNumberToken(scanner$1);
+      } else {
+        LoxError.error(String(scanner$1.line), "Unexpected character.");
+        return scanner$1;
+      }
   }
 }
 
@@ -239,7 +359,7 @@ function tokenToString(token) {
 }
 
 var tokens = scanTokens({
-      source: "((!*+-=<> <= =====))",
+      source: "((!*+-=<> <= =====))\"dsfsa\"123.1({})",
       tokens: [],
       start: 0,
       current: 0,
@@ -252,11 +372,18 @@ export {
   Value ,
   makeScanner ,
   isAtEnd ,
+  isDigit ,
   advanceScanner ,
   getChar ,
   getLexeme ,
+  peek ,
+  peekNext ,
   addToken ,
+  addTokenWithLiteral ,
   addDoubleToken ,
+  addCommentToken ,
+  addStringToken ,
+  addNumberToken ,
   scanToken ,
   scanTokens ,
   tokenTypeToString ,
