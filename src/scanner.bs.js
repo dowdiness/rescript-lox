@@ -4,6 +4,73 @@ import * as LoxError from "./loxError.bs.js";
 
 var Value = {};
 
+var keywords = [
+  [
+    "and",
+    /* And */22
+  ],
+  [
+    "class",
+    /* Class */23
+  ],
+  [
+    "else",
+    /* Else */24
+  ],
+  [
+    "false",
+    /* False */25
+  ],
+  [
+    "fun",
+    /* Fun */26
+  ],
+  [
+    "for",
+    /* For */27
+  ],
+  [
+    "if",
+    /* If */28
+  ],
+  [
+    "nil",
+    /* Nil */29
+  ],
+  [
+    "or",
+    /* Or */30
+  ],
+  [
+    "print",
+    /* Print */31
+  ],
+  [
+    "return",
+    /* Return */32
+  ],
+  [
+    "super",
+    /* Super */33
+  ],
+  [
+    "this",
+    /* This */34
+  ],
+  [
+    "true",
+    /* True */35
+  ],
+  [
+    "var",
+    /* Var */36
+  ],
+  [
+    "while",
+    /* While */37
+  ]
+];
+
 function makeScanner(source) {
   return {
           source: source,
@@ -23,6 +90,22 @@ function isDigit(c) {
     return c <= "9";
   } else {
     return false;
+  }
+}
+
+function isAlpha(c) {
+  if (c >= "a" && c <= "z" || c >= "A" && c <= "Z") {
+    return true;
+  } else {
+    return c === "_";
+  }
+}
+
+function isAlphaNumeric(c) {
+  if (isAlpha(c)) {
+    return true;
+  } else {
+    return isDigit(c);
   }
 }
 
@@ -179,6 +262,26 @@ function addNumberToken(scanner) {
   return addToken(scanner$1, /* Number */21);
 }
 
+function identifier(scanner) {
+  var consumeIdentifier = function (_scanner) {
+    while(true) {
+      var scanner = _scanner;
+      if (!isAlphaNumeric(peek(scanner))) {
+        return scanner;
+      }
+      _scanner = advanceScanner(scanner);
+      continue ;
+    };
+  };
+  var scanner$1 = consumeIdentifier(scanner);
+  var text = scanner$1.source.substring(scanner$1.start, scanner$1.current);
+  var match = keywords.find(function (param) {
+        return param[0] === text;
+      });
+  var token = match !== undefined ? match[1] : /* Identifier */19;
+  return addToken(scanner$1, token);
+}
+
 function scanToken(scanner) {
   var scanner$1 = advanceScanner(scanner);
   var c = getChar(scanner$1);
@@ -233,6 +336,8 @@ function scanToken(scanner) {
     default:
       if (isDigit(c)) {
         return addNumberToken(scanner$1);
+      } else if (isAlpha(c)) {
+        return identifier(scanner$1);
       } else {
         LoxError.error(String(scanner$1.line), "Unexpected character.");
         return scanner$1;
@@ -359,7 +464,7 @@ function tokenToString(token) {
 }
 
 var tokens = scanTokens({
-      source: "((!*+-=<> <= =====))\"dsfsa\"123.1({})",
+      source: "((!*+-=<> <= =====))\"dsfsa\"123.1if ad and({})",
       tokens: [],
       start: 0,
       current: 0,
@@ -370,9 +475,12 @@ console.log(tokens.map(tokenToString));
 
 export {
   Value ,
+  keywords ,
   makeScanner ,
   isAtEnd ,
   isDigit ,
+  isAlpha ,
+  isAlphaNumeric ,
   advanceScanner ,
   getChar ,
   getLexeme ,
@@ -384,6 +492,7 @@ export {
   addCommentToken ,
   addStringToken ,
   addNumberToken ,
+  identifier ,
   scanToken ,
   scanTokens ,
   tokenTypeToString ,

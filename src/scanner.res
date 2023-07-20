@@ -69,6 +69,25 @@ type scanner = {
   line: int,
 }
 
+let keywords = [
+  ("and", And),
+  ("class", Class),
+  ("else", Else),
+  ("false" ,False),
+  ("fun", Fun),
+  ("for", For),
+  ("if", If),
+  ("nil", Nil),
+  ("or", Or),
+  ("print", Print),
+  ("return", Return),
+  ("super", Super),
+  ("this", This),
+  ("true", True),
+  ("var", Var),
+  ("while", While),
+]
+
 let makeScanner = (source) => {
   source: source,
   tokens: [],
@@ -82,7 +101,15 @@ let isAtEnd = (scanner) => {
 }
 
 let isDigit = (c) => {
-  c >= "0" && c <= "9" ? true : false
+  c >= "0" && c <= "9"
+}
+
+let isAlpha = (c) => {
+  (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c == "_"
+}
+
+let isAlphaNumeric = (c) => {
+  isAlpha(c) || isDigit(c)
 }
 
 let advanceScanner = (scanner) => {
@@ -210,6 +237,24 @@ let addNumberToken = (scanner) => {
   addToken(scanner, Number)
 }
 
+let identifier = (scanner) => {
+  let rec consumeIdentifier = (scanner) => {
+    if peek(scanner)->isAlphaNumeric {
+      scanner->advanceScanner->consumeIdentifier
+    } else {
+      scanner
+    }
+  }
+  let scanner = consumeIdentifier(scanner)
+  let text = String.substring(scanner.source, ~start=scanner.start, ~end=scanner.current)
+  let token =
+    switch keywords->Js.Array2.find(((keyword, _)) => keyword == text) {
+      | Some((_, token)) => token
+      | None => Identifier
+    }
+  addToken(scanner, token)
+}
+
 let scanToken = (scanner) => {
   let scanner = advanceScanner(scanner)
   let c = getChar(scanner)
@@ -236,6 +281,7 @@ let scanToken = (scanner) => {
         | "\n" => { ...scanner, line: scanner.line + 1 }
         | `"` => addStringToken(scanner)
         | c when isDigit(c) => addNumberToken(scanner)
+        | c when isAlpha(c) => identifier(scanner)
         | _ => {
           LoxError.error(Js.String.make(scanner.line), "Unexpected character.")
           scanner
@@ -311,5 +357,5 @@ let tokenToString = (token: token) => {
   tokenTypeToString(token.tokenType) ++ ", " ++ token.lexeme ++ ", " ++ Js.String.make(token.literal)
 }
 
-let tokens = scanTokens(makeScanner(`((!*+-=<> <= =====))"dsfsa"123.1({})`))
+let tokens = scanTokens(makeScanner(`((!*+-=<> <= =====))"dsfsa"123.1if ad and({})`))
 Js.log(tokens->Array.map(tokenToString))
