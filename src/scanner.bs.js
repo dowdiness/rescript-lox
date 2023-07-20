@@ -463,16 +463,6 @@ function tokenToString(token) {
   return tokenTypeToString(token.tokenType) + ", " + token.lexeme + ", " + String(token.literal);
 }
 
-var tokens = scanTokens({
-      source: "((!*+-=<> <= =====))\"dsfsa\"123.1if ad and({})",
-      tokens: [],
-      start: 0,
-      current: 0,
-      line: 1
-    });
-
-console.log(tokens.map(tokenToString));
-
 export {
   Value ,
   keywords ,
@@ -497,6 +487,5 @@ export {
   scanTokens ,
   tokenTypeToString ,
   tokenToString ,
-  tokens ,
 }
-/* tokens Not a pure module */
+/* No side effect */

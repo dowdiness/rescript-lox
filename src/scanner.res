@@ -356,6 +356,3 @@ let tokenTypeToString = (tokenType: tokenType) => {
 let tokenToString = (token: token) => {
   tokenTypeToString(token.tokenType) ++ ", " ++ token.lexeme ++ ", " ++ Js.String.make(token.literal)
 }
-
-let tokens = scanTokens(makeScanner(`((!*+-=<> <= =====))"dsfsa"123.1if ad and({})`))
-Js.log(tokens->Array.map(tokenToString))

@@ -30,8 +30,8 @@ let readFileByLine = (path) => {
 }
 
 let run = (source) => {
-  // let tokens = scanTokens(source)
-  Js.log(`Scanner: ${source}`)
+  let tokens = Scanner.scanTokens(Scanner.makeScanner(source))
+  Js.log(tokens->Array.map(Scanner.tokenToString))
 }
 
 let runFile = (path: string) => {
@@ -70,4 +70,4 @@ let runPrompt = () => {
 }
 
 // runFile("./example.lox")
-// runPrompt()
+runPrompt()
