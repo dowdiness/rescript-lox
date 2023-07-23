@@ -71,7 +71,7 @@ var keywords = [
   ]
 ];
 
-function makeScanner(source) {
+function make(source) {
   return {
           source: source,
           tokens: [],
@@ -81,8 +81,8 @@ function makeScanner(source) {
         };
 }
 
-function isAtEnd(scanner) {
-  return scanner.current >= scanner.source.length;
+function isAtEnd(param) {
+  return param.current >= param.source.length;
 }
 
 function isDigit(c) {
@@ -119,16 +119,18 @@ function advanceScanner(scanner) {
         };
 }
 
-function getChar(scanner) {
-  if (scanner.current > scanner.source.length) {
+function getChar(param) {
+  var current = param.current;
+  var source = param.source;
+  if (current > source.length) {
     return ;
   } else {
-    return scanner.source[scanner.current - 1 | 0];
+    return source[current - 1 | 0];
   }
 }
 
-function getLexeme(scanner) {
-  return scanner.source.substring(scanner.start, scanner.current);
+function getLexeme(param) {
+  return param.source.substring(param.start, param.current);
 }
 
 function peek(scanner) {
@@ -148,17 +150,14 @@ function peekNext(scanner) {
 }
 
 function addToken(scanner, tokenType) {
-  var token_lexeme = getLexeme(scanner);
-  var token_line = scanner.line;
-  var token = {
-    tokenType: tokenType,
-    lexeme: token_lexeme,
-    literal: /* LoxNil */0,
-    line: token_line
-  };
   return {
           source: scanner.source,
-          tokens: scanner.tokens.concat([token]),
+          tokens: scanner.tokens.concat([{
+                  tokenType: tokenType,
+                  lexeme: getLexeme(scanner),
+                  literal: /* LoxNil */0,
+                  line: scanner.line
+                }]),
           start: scanner.start,
           current: scanner.current,
           line: scanner.line
@@ -166,17 +165,14 @@ function addToken(scanner, tokenType) {
 }
 
 function addTokenWithLiteral(scanner, tokenType, literal) {
-  var token_lexeme = getLexeme(scanner);
-  var token_line = scanner.line;
-  var token = {
-    tokenType: tokenType,
-    lexeme: token_lexeme,
-    literal: literal,
-    line: token_line
-  };
   return {
           source: scanner.source,
-          tokens: scanner.tokens.concat([token]),
+          tokens: scanner.tokens.concat([{
+                  tokenType: tokenType,
+                  lexeme: getLexeme(scanner),
+                  literal: literal,
+                  line: scanner.line
+                }]),
           start: scanner.start,
           current: scanner.current,
           line: scanner.line
@@ -262,7 +258,7 @@ function addNumberToken(scanner) {
   return addToken(scanner$1, /* Number */21);
 }
 
-function identifier(scanner) {
+function addIdentifierToken(scanner) {
   var consumeIdentifier = function (_scanner) {
     while(true) {
       var scanner = _scanner;
@@ -337,7 +333,7 @@ function scanToken(scanner) {
       if (isDigit(c)) {
         return addNumberToken(scanner$1);
       } else if (isAlpha(c)) {
-        return identifier(scanner$1);
+        return addIdentifierToken(scanner$1);
       } else {
         LoxError.error(String(scanner$1.line), "Unexpected character.");
         return scanner$1;
@@ -466,7 +462,7 @@ function tokenToString(token) {
 export {
   Value ,
   keywords ,
-  makeScanner ,
+  make ,
   isAtEnd ,
   isDigit ,
   isAlpha ,
@@ -482,7 +478,7 @@ export {
   addCommentToken ,
   addStringToken ,
   addNumberToken ,
-  identifier ,
+  addIdentifierToken ,
   scanToken ,
   scanTokens ,
   tokenTypeToString ,

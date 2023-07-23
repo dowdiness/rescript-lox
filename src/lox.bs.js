@@ -28,7 +28,7 @@ function readFileByLine(path) {
 }
 
 function run(source) {
-  var tokens = Scanner.scanTokens(Scanner.makeScanner(source));
+  var tokens = Scanner.scanTokens(Scanner.make(source));
   console.log(tokens.map(Scanner.tokenToString));
 }
 

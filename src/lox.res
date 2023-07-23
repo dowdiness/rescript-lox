@@ -30,7 +30,7 @@ let readFileByLine = (path) => {
 }
 
 let run = (source) => {
-  let tokens = Scanner.scanTokens(Scanner.makeScanner(source))
+  let tokens = Scanner.scanTokens(Scanner.make(source))
   Js.log(tokens->Array.map(Scanner.tokenToString))
 }
 

@@ -61,7 +61,7 @@ type token = {
   line: int,
 }
 
-type scanner = {
+type t = {
   source: string,
   tokens: array<token>,
   start: int,
@@ -88,7 +88,7 @@ let keywords = [
   ("while", While),
 ]
 
-let makeScanner = (source) => {
+let make = (source) => {
   source: source,
   tokens: [],
   start: 0,
@@ -96,8 +96,8 @@ let makeScanner = (source) => {
   line: 1
 }
 
-let isAtEnd = (scanner) => {
-  scanner.current >= scanner.source->Js.String.length
+let isAtEnd = ({ source, current }) => {
+  current >= source->Js.String.length
 }
 
 let isDigit = (c) => {
@@ -117,16 +117,16 @@ let advanceScanner = (scanner) => {
   current: scanner.current + 1
 }
 
-let getChar = (scanner) => {
-  if scanner.current > scanner.source->Js.String.length {
+let getChar = ({ source, current }) => {
+  if current > source->Js.String.length {
     None
   } else {
-    Some(Js.String.get(scanner.source, scanner.current - 1))
+    Some(Js.String.get(source, current - 1))
   }
 }
 
-let getLexeme = (scanner: scanner) => {
-  scanner.source->Js.String2.substring(~from=scanner.start, ~to_=scanner.current)
+let getLexeme = ({ source, start, current }) => {
+  source->Js.String2.substring(~from=start, ~to_=current)
 }
 
 let peek = (scanner) => {
@@ -145,29 +145,31 @@ let peekNext = (scanner) => {
   }
 }
 
-let addToken = (scanner: scanner, tokenType) => {
-  let token = {
-    tokenType: tokenType,
-    lexeme: getLexeme(scanner),
-    literal: Value.LoxNil,
-    line: scanner.line,
-  }
+let addToken = (scanner, tokenType) => {
   {
     ...scanner,
-    tokens: Array.concat(scanner.tokens, [token])
+    tokens: Array.concat(
+      scanner.tokens,
+      [{
+        tokenType: tokenType,
+        lexeme: getLexeme(scanner),
+        literal: Value.LoxNil,
+        line: scanner.line,
+      }])
   }
 }
 
 let addTokenWithLiteral = (scanner, tokenType, literal) => {
-  let token = {
-    tokenType: tokenType,
-    lexeme: getLexeme(scanner),
-    literal: literal,
-    line: scanner.line,
-  }
   {
     ...scanner,
-    tokens: Array.concat(scanner.tokens, [token])
+    tokens: Array.concat(
+      scanner.tokens,
+      [{
+        tokenType: tokenType,
+        lexeme: getLexeme(scanner),
+        literal: literal,
+        line: scanner.line,
+      }])
   }
 }
 
@@ -237,7 +239,7 @@ let addNumberToken = (scanner) => {
   addToken(scanner, Number)
 }
 
-let identifier = (scanner) => {
+let addIdentifierToken = (scanner) => {
   let rec consumeIdentifier = (scanner) => {
     if peek(scanner)->isAlphaNumeric {
       scanner->advanceScanner->consumeIdentifier
@@ -281,7 +283,7 @@ let scanToken = (scanner) => {
         | "\n" => { ...scanner, line: scanner.line + 1 }
         | `"` => addStringToken(scanner)
         | c when isDigit(c) => addNumberToken(scanner)
-        | c when isAlpha(c) => identifier(scanner)
+        | c when isAlpha(c) => addIdentifierToken(scanner)
         | _ => {
           LoxError.error(Js.String.make(scanner.line), "Unexpected character.")
           scanner
