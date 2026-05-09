@@ -12,7 +12,8 @@
   "scripts": {
     "res:build": "rescript",
     "res:clean": "rescript clean",
-    "res:dev": "rescript build -w"
+    "res:dev": "rescript build -w",
+    "test": "rescript && node --test 'tests/**/*Test.res.js'"
   },
   "dependencies": {
     "@rescript/runtime": "^12.2.0",

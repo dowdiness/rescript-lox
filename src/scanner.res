@@ -1,5 +1,3 @@
-// open NodeJs
-
 module Value = {
   type t =
     | LoxBool(bool)

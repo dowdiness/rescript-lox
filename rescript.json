@@ -1,9 +1,15 @@
 {
   "name": "rescript-lox",
-  "sources": {
-    "dir": "src",
-    "subdirs": true
-  },
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    },
+    {
+      "dir": "tests",
+      "type": "dev"
+    }
+  ],
   "package-specs": {
     "module": "esmodule",
     "in-source": true
