@@ -1,7 +1,7 @@
 let hadError = ref(false)
 
 let report = (line, where, message) => {
-  Js.log(`[line ${line}] Error"${where}": " ${message}`)
+  Console.log(`[line ${line}] Error"${where}": " ${message}`)
   hadError := true
 }
 
