@@ -32,7 +32,10 @@ let readFileByLine = path => {
 
 let run = source => {
   let tokens = Scanner.scanTokens(Scanner.make(source))
-  Log.log(tokens->Array.map(Scanner.tokenToString))
+  Parser.parse(tokens)
+    ->Result.mapError(err => Log.log(err))
+    ->Result.map(expr => Log.log(Ast.pretty(expr)))
+    ->ignore
 }
 
 let runFile = (path: string) => {

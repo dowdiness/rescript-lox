@@ -12,7 +12,7 @@
   "scripts": {
     "res:build": "rescript",
     "res:clean": "rescript clean",
-    "res:dev": "rescript build -w",
+    "res:dev": "rescript watch",
     "test": "rescript && node --test 'tests/**/*Test.res.js'"
   },
   "dependencies": {

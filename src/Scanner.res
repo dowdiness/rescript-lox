@@ -240,7 +240,12 @@ let addNumberToken = scanner => {
     }
   }
   let scanner = consumeNumber(scanner)
-  addToken(scanner, Number)
+  let text = String.substring(scanner.source, ~start=scanner.start, ~end=scanner.current)
+  let literal = switch Float.fromString(text) {
+  | Some(n) => Value.LoxNumber(n)
+  | None => Value.LoxNil
+  }
+  addTokenWithLiteral(scanner, Number, literal)
 }
 
 let addIdentifierToken = scanner => {
